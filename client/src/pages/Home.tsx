@@ -1,5 +1,6 @@
 import { usePrices } from "@/hooks/use-market-data";
 import { PriceCard } from "@/components/PriceCard";
+import { GoldChart } from "@/components/GoldChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCcw, Coins, Sparkles, Banknote, Clock, Globe } from "lucide-react";
 import { motion } from "framer-motion";
@@ -60,10 +61,10 @@ export default function Home() {
               Live Data
             </div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Market<span className="text-primary">Pulse</span>
+              Just Check <span className="text-primary">Market</span>
             </h1>
             <p className="text-muted-foreground">
-              Real-time prices from Baha24
+              Real-time market prices
             </p>
           </div>
 
@@ -118,16 +119,19 @@ export default function Home() {
             {isLoading ? (
               <LoadingSkeleton />
             ) : (
-              <motion.div 
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-              >
-                {data?.gold?.map((item: any) => (
-                  <PriceCard key={item.symbol} item={item} type="gold" />
-                ))}
-              </motion.div>
+              <>
+                <GoldChart data={data?.gold || []} />
+                <motion.div 
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                >
+                  {data?.gold?.map((item: any) => (
+                    <PriceCard key={item.symbol} item={item} type="gold" />
+                  ))}
+                </motion.div>
+              </>
             )}
           </TabsContent>
 
@@ -180,7 +184,7 @@ export default function Home() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground/50">
-            Data from Baha24.com API - Updates every 5 minutes
+            Updates every 5 minutes
           </p>
         </footer>
       </div>
