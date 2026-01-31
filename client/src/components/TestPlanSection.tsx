@@ -1,6 +1,6 @@
 import { useNobitexPrices } from "@/hooks/use-market-data";
 import { motion } from "framer-motion";
-import { RefreshCcw, TrendingUp, Clock, TrendingDown, Activity } from "lucide-react";
+import { RefreshCcw, TrendingUp, Clock, TrendingDown, Activity, DollarSign } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useEffect, useState } from "react";
 
@@ -48,17 +48,15 @@ function generateInitialHistory(price: number, dayHigh: number, dayLow: number):
 }
 
 function CryptoCard({ symbol, name, price, dayHigh, dayLow, color, history }: CryptoCardProps) {
-  const formattedPrice = new Intl.NumberFormat('en-US').format(Math.round(price));
-  const formattedHigh = new Intl.NumberFormat('en-US').format(Math.round(dayHigh));
-  const formattedLow = new Intl.NumberFormat('en-US').format(Math.round(dayLow));
-  
-  const priceChange = dayHigh > 0 ? ((price - dayLow) / (dayHigh - dayLow) * 100).toFixed(1) : 0;
+  const formattedPrice = new Intl.NumberFormat('en-US', { maximumFractionDigits: 8 }).format(price);
+  const formattedHigh = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(dayHigh);
+  const formattedLow = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(dayLow);
   
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card/50 backdrop-blur-sm border border-white/10 rounded-xl p-5 hover:border-opacity-30 transition-all"
+      className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-5 hover:border-opacity-30 transition-all"
       style={{ borderColor: `${color}30` }}
       data-testid={`card-crypto-${symbol}`}
     >
@@ -69,7 +67,7 @@ function CryptoCard({ symbol, name, price, dayHigh, dayLow, color, history }: Cr
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold" style={{ color }}>{formattedPrice}</p>
-          <p className="text-xs text-muted-foreground">Toman</p>
+          <p className="text-xs text-muted-foreground">USDT</p>
         </div>
       </div>
       
@@ -86,12 +84,12 @@ function CryptoCard({ symbol, name, price, dayHigh, dayLow, color, history }: Cr
             <YAxis hide domain={['dataMin', 'dataMax']} />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#1f2937', 
-                border: '1px solid #374151',
+                backgroundColor: 'hsl(var(--card))', 
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
-                color: '#f3f4f6'
+                color: 'hsl(var(--foreground))'
               }}
-              formatter={(value: number) => [`${new Intl.NumberFormat('en-US').format(Math.round(value))} Toman`, 'Price']}
+              formatter={(value: number) => [`${new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(value)} USDT`, 'Price']}
             />
             <Area 
               type="monotone" 
@@ -124,6 +122,44 @@ function CryptoCard({ symbol, name, price, dayHigh, dayLow, color, history }: Cr
   );
 }
 
+const FEATURED_CRYPTOS = [
+  { symbol: 'BTC', color: '#f7931a' },
+  { symbol: 'ETH', color: '#627eea' },
+  { symbol: 'XRP', color: '#00aae4' },
+  { symbol: 'SOL', color: '#9945FF' },
+  { symbol: 'ADA', color: '#0033AD' },
+  { symbol: 'DOGE', color: '#C2A633' },
+];
+
+const ALL_CRYPTOS_COLORS: Record<string, string> = {
+  'BTC': '#f7931a',
+  'ETH': '#627eea',
+  'XRP': '#00aae4',
+  'LTC': '#bfbbbb',
+  'BNB': '#F3BA2F',
+  'TRX': '#ef0027',
+  'DOGE': '#C2A633',
+  'ADA': '#0033AD',
+  'SOL': '#9945FF',
+  'AVAX': '#E84142',
+  'DOT': '#E6007A',
+  'LINK': '#375BD2',
+  'MATIC': '#8247E5',
+  'ATOM': '#2E3148',
+  'UNI': '#FF007A',
+  'XLM': '#000000',
+  'ETC': '#328332',
+  'FIL': '#0090FF',
+  'VET': '#15BDFF',
+  'AAVE': '#B6509E',
+  'XMR': '#FF6600',
+  'EOS': '#000000',
+  'NEO': '#00E599',
+  'SAND': '#00ADEF',
+  'SHIB': '#FFA409',
+  'TON': '#0098EA',
+};
+
 export function TestPlanSection() {
   const { data, isLoading, isError, refetch, isRefetching } = useNobitexPrices();
   const [priceHistories, setPriceHistories] = useState<Record<string, PriceHistory[]>>({});
@@ -132,14 +168,16 @@ export function TestPlanSection() {
   useEffect(() => {
     if (data?.prices && !initialized) {
       const histories: Record<string, PriceHistory[]> = {};
-      ['BTC', 'XRP', 'TRX'].forEach(symbol => {
-        const priceData = data.prices[symbol] as PriceData;
-        if (priceData) {
-          histories[symbol] = generateInitialHistory(
-            priceData.price,
-            priceData.dayHigh || priceData.price * 1.02,
-            priceData.dayLow || priceData.price * 0.98
-          );
+      Object.keys(data.prices).forEach(symbol => {
+        if (symbol !== 'USDT') {
+          const priceData = data.prices[symbol] as PriceData;
+          if (priceData) {
+            histories[symbol] = generateInitialHistory(
+              priceData.price,
+              priceData.dayHigh || priceData.price * 1.02,
+              priceData.dayLow || priceData.price * 0.98
+            );
+          }
         }
       });
       setPriceHistories(histories);
@@ -150,12 +188,14 @@ export function TestPlanSection() {
       
       setPriceHistories(prev => {
         const newHistories: Record<string, PriceHistory[]> = {};
-        ['BTC', 'XRP', 'TRX'].forEach(symbol => {
-          const priceData = data.prices[symbol] as PriceData;
-          if (priceData) {
-            const existing = prev[symbol] || [];
-            const updated = [...existing, { time: timeStr, price: priceData.price }];
-            newHistories[symbol] = updated.slice(-48);
+        Object.keys(data.prices).forEach(symbol => {
+          if (symbol !== 'USDT') {
+            const priceData = data.prices[symbol] as PriceData;
+            if (priceData) {
+              const existing = prev[symbol] || [];
+              const updated = [...existing, { time: timeStr, price: priceData.price }];
+              newHistories[symbol] = updated.slice(-48);
+            }
           }
         });
         return newHistories;
@@ -165,12 +205,12 @@ export function TestPlanSection() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[1, 2, 3].map(i => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map(i => (
           <div key={i} className="bg-card/50 border rounded-xl p-5 animate-pulse">
-            <div className="h-6 bg-white/10 rounded w-20 mb-2" />
-            <div className="h-4 bg-white/10 rounded w-32 mb-4" />
-            <div className="h-32 bg-white/10 rounded" />
+            <div className="h-6 bg-muted rounded w-20 mb-2" />
+            <div className="h-4 bg-muted rounded w-32 mb-4" />
+            <div className="h-32 bg-muted rounded" />
           </div>
         ))}
       </div>
@@ -198,11 +238,26 @@ export function TestPlanSection() {
     );
   }
 
-  const cryptos = [
-    { symbol: 'BTC', name: 'Bitcoin', color: '#f7931a' },
-    { symbol: 'XRP', name: 'Ripple', color: '#00aae4' },
-    { symbol: 'TRX', name: 'Tron', color: '#ef0027' },
-  ];
+  const availableCryptos = data?.prices 
+    ? Object.entries(data.prices)
+        .filter(([symbol]) => symbol !== 'USDT')
+        .map(([symbol, priceData]: [string, any]) => ({
+          symbol,
+          name: priceData.name,
+          price: priceData.price,
+          dayHigh: priceData.dayHigh || priceData.price * 1.02,
+          dayLow: priceData.dayLow || priceData.price * 0.98,
+          color: ALL_CRYPTOS_COLORS[symbol] || '#6366f1'
+        }))
+    : [];
+
+  const featuredCryptos = FEATURED_CRYPTOS
+    .map(fc => availableCryptos.find(c => c.symbol === fc.symbol))
+    .filter((c): c is NonNullable<typeof c> => c !== undefined);
+
+  const otherCryptos = availableCryptos.filter(
+    c => !FEATURED_CRYPTOS.some(fc => fc.symbol === c.symbol)
+  );
 
   return (
     <div className="space-y-6">
@@ -210,7 +265,7 @@ export function TestPlanSection() {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-semibold">
             <TrendingUp className="w-3 h-3" />
-            Live Crypto Prices
+            Live Crypto Prices (Nobitex)
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
@@ -220,7 +275,7 @@ export function TestPlanSection() {
         <button 
           onClick={() => refetch()}
           disabled={isRefetching}
-          className={`p-2 rounded-full hover:bg-white/5 transition-colors ${isRefetching ? 'animate-spin text-purple-400' : 'text-muted-foreground'}`}
+          className={`p-2 rounded-full hover:bg-muted transition-colors ${isRefetching ? 'animate-spin text-purple-400' : 'text-muted-foreground'}`}
           title="Refresh Now"
           data-testid="button-refresh-nobitex"
         >
@@ -233,7 +288,7 @@ export function TestPlanSection() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 font-bold">
-                $
+                <DollarSign className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="font-bold text-foreground">USDT / Toman</h3>
@@ -250,26 +305,56 @@ export function TestPlanSection() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {cryptos.map(crypto => {
-          const priceData = data?.prices?.[crypto.symbol] as PriceData | undefined;
-          return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Featured Cryptocurrencies</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featuredCryptos.map(crypto => (
             <CryptoCard
               key={crypto.symbol}
               symbol={crypto.symbol}
               name={crypto.name}
-              price={priceData?.price || 0}
-              dayHigh={priceData?.dayHigh || 0}
-              dayLow={priceData?.dayLow || 0}
+              price={crypto.price}
+              dayHigh={crypto.dayHigh}
+              dayLow={crypto.dayLow}
               color={crypto.color}
               history={priceHistories[crypto.symbol] || []}
             />
-          );
-        })}
+          ))}
+        </div>
       </div>
 
+      {otherCryptos.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">More Cryptocurrencies</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {otherCryptos.map(crypto => (
+              <motion.div
+                key={crypto.symbol}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-primary/30 transition-all"
+                data-testid={`card-crypto-small-${crypto.symbol}`}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-foreground">{crypto.symbol}</h4>
+                    <p className="text-xs text-muted-foreground">{crypto.name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold" style={{ color: crypto.color }}>
+                      {new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(crypto.price)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">USDT</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="text-xs text-muted-foreground/60 text-center">
-        Prices in Toman (USDT rate applied) - Last updated: {data?.lastUpdated ? new Date(data.lastUpdated).toLocaleTimeString() : 'N/A'}
+        Prices in USDT from Nobitex API - Last updated: {data?.lastUpdated ? new Date(data.lastUpdated).toLocaleTimeString() : 'N/A'}
       </p>
     </div>
   );

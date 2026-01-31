@@ -3,9 +3,12 @@ import { PriceCard } from "@/components/PriceCard";
 import { GoldChart } from "@/components/GoldChart";
 import { TestPlanSection } from "@/components/TestPlanSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCcw, Coins, Sparkles, Banknote, Clock, Globe, FlaskConical } from "lucide-react";
+import { RefreshCcw, Coins, Sparkles, Banknote, Clock, Globe, FlaskConical, Sun, Moon, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTheme } from "@/components/ThemeProvider";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function LoadingSkeleton() {
   return (
@@ -23,6 +26,7 @@ function LoadingSkeleton() {
 
 export default function Home() {
   const { data, isLoading, isError, refetch, isRefetching } = usePrices();
+  const { theme, toggleTheme } = useTheme();
 
   const container = {
     hidden: { opacity: 0 },
@@ -69,17 +73,67 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 text-sm text-muted-foreground bg-secondary/30 p-3 rounded-xl border border-white/5">
-            <Clock className="w-4 h-4 text-primary" />
-            <span>Auto-refresh: 5 min</span>
-            <button 
-              onClick={() => refetch()}
-              disabled={isRefetching}
-              className={`p-2 rounded-full hover:bg-white/5 transition-colors ${isRefetching ? 'animate-spin text-primary' : ''}`}
-              title="Refresh Now"
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground bg-secondary/30 p-3 rounded-xl border border-white/5">
+              <Clock className="w-4 h-4 text-primary" />
+              <span>Auto-refresh: 5 min</span>
+              <button 
+                onClick={() => refetch()}
+                disabled={isRefetching}
+                className={`p-2 rounded-full hover:bg-white/5 transition-colors ${isRefetching ? 'animate-spin text-primary' : ''}`}
+                title="Refresh Now"
+                data-testid="button-refresh"
+              >
+                <RefreshCcw className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="bg-secondary/30 border border-white/5 hover:bg-secondary/50"
+              data-testid="button-theme-toggle"
             >
-              <RefreshCcw className="w-4 h-4" />
-            </button>
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-secondary/30 border border-white/5 hover:bg-secondary/50"
+                  data-testid="button-about"
+                >
+                  <Info className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>About Just Check Market</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-sm text-muted-foreground">
+                  <p>
+                    Just Check Market is a real-time cryptocurrency, gold, and currency price tracker 
+                    designed to help you stay informed about market movements.
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-foreground">Features:</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Live cryptocurrency prices in USDT</li>
+                      <li>Gold and precious metals prices</li>
+                      <li>International currency exchange rates</li>
+                      <li>Auto-refresh every 5 minutes</li>
+                      <li>Beta: Advanced charts via Nobitex API</li>
+                    </ul>
+                  </div>
+                  <p className="text-xs">
+                    Built by Artin Zomorodian | DeepInkTeam.com
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </header>
 
@@ -182,13 +236,13 @@ export default function Home() {
               </a>
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <a 
-                href="https://DeepInkteam.com" 
+                href="https://DeepInkTeam.com" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center gap-1 hover:text-primary transition-colors"
               >
                 <Globe className="w-4 h-4" />
-                DeepInkteam.com
+                DeepInkTeam.com
               </a>
             </div>
           </div>

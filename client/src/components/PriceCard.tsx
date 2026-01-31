@@ -99,7 +99,8 @@ function getIcon(type: 'crypto' | 'gold' | 'currency') {
 export function PriceCard({ item, type }: PriceCardProps) {
   const Icon = getIcon(type);
   const formattedPrice = formatPrice(item.sell, type);
-  const suffix = 'Toman';
+  const isUSDT = item.symbol === 'USDT';
+  const suffix = type === 'crypto' && !isUSDT ? 'USDT' : 'Toman';
 
   return (
     <motion.div

@@ -15,6 +15,38 @@ interface NobitexOrderbook {
 let nobitexCache: { data: any; timestamp: number } | null = null;
 const NOBITEX_CACHE_TTL = 30 * 1000;
 
+let nobitexOrderbookCache: { data: any; timestamp: number } | null = null;
+const NOBITEX_ORDERBOOK_CACHE_TTL = 30 * 1000;
+
+const NOBITEX_CRYPTO_PAIRS: Record<string, { symbol: string; name: string }> = {
+  'BTCUSDT': { symbol: 'BTC', name: 'Bitcoin' },
+  'ETHUSDT': { symbol: 'ETH', name: 'Ethereum' },
+  'XRPUSDT': { symbol: 'XRP', name: 'Ripple' },
+  'LTCUSDT': { symbol: 'LTC', name: 'Litecoin' },
+  'BNBUSDT': { symbol: 'BNB', name: 'Binance Coin' },
+  'TRXUSDT': { symbol: 'TRX', name: 'Tron' },
+  'DOGEUSDT': { symbol: 'DOGE', name: 'Dogecoin' },
+  'ADAUSDT': { symbol: 'ADA', name: 'Cardano' },
+  'SOLUSDT': { symbol: 'SOL', name: 'Solana' },
+  'AVAXUSDT': { symbol: 'AVAX', name: 'Avalanche' },
+  'DOTUSDT': { symbol: 'DOT', name: 'Polkadot' },
+  'LINKUSDT': { symbol: 'LINK', name: 'Chainlink' },
+  'MATICUSDT': { symbol: 'MATIC', name: 'Polygon' },
+  'ATOMUSDT': { symbol: 'ATOM', name: 'Cosmos' },
+  'UNIUSDT': { symbol: 'UNI', name: 'Uniswap' },
+  'XLMUSDT': { symbol: 'XLM', name: 'Stellar' },
+  'ETCUSDT': { symbol: 'ETC', name: 'Ethereum Classic' },
+  'FILUSDT': { symbol: 'FIL', name: 'Filecoin' },
+  'VETUSDT': { symbol: 'VET', name: 'VeChain' },
+  'AAVEUSDT': { symbol: 'AAVE', name: 'Aave' },
+  'XMRUSDT': { symbol: 'XMR', name: 'Monero' },
+  'EOSUSDT': { symbol: 'EOS', name: 'EOS' },
+  'NEOUSDT': { symbol: 'NEO', name: 'Neo' },
+  'SANDUSDT': { symbol: 'SAND', name: 'The Sandbox' },
+  'SHIBUSDT': { symbol: 'SHIB', name: 'Shiba Inu' },
+  'TONUSDT': { symbol: 'TON', name: 'Toncoin' },
+};
+
 function categorizePrices(items: PriceItem[]): CategorizedPrices {
   const crypto: PriceItem[] = [];
   const gold: PriceItem[] = [];
@@ -89,43 +121,69 @@ export async function registerRoutes(
 
   app.get('/api/nobitex', async (req, res) => {
     try {
-      if (nobitexCache && Date.now() - nobitexCache.timestamp < NOBITEX_CACHE_TTL) {
-        return res.json(nobitexCache.data);
+      if (nobitexOrderbookCache && Date.now() - nobitexOrderbookCache.timestamp < NOBITEX_ORDERBOOK_CACHE_TTL) {
+        return res.json(nobitexOrderbookCache.data);
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      const response = await fetch('https://apiv2.nobitex.ir/v3/orderbook/all', {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error('Nobitex orderbook API failed');
+      }
+      
+      const data = await response.json() as NobitexOrderbook;
+      
+      if (data.status !== 'ok') {
+        throw new Error('Nobitex API returned error status');
+      }
+
+      const prices: Record<string, any> = {};
+      
+      for (const [pair, info] of Object.entries(NOBITEX_CRYPTO_PAIRS)) {
+        const orderbook = data[pair];
+        if (orderbook && orderbook.lastTradePrice) {
+          const price = parseFloat(orderbook.lastTradePrice);
+          prices[info.symbol] = {
+            price,
+            symbol: info.symbol,
+            name: info.name,
+            dayHigh: price * 1.02,
+            dayLow: price * 0.98,
+            lastUpdate: orderbook.lastUpdate || Date.now()
+          };
+        }
       }
 
       const rawPrices = await fetchBaha24Prices();
-      
-      if (rawPrices.length === 0) {
-        return res.status(503).json({ message: "Unable to fetch prices" });
-      }
-
       const usdtItem = rawPrices.find(p => p.symbol === 'USDT');
-      const btcItem = rawPrices.find(p => p.symbol === 'BITCOIN');
-      const xrpItem = rawPrices.find(p => p.symbol === 'XRP');
-      const trxItem = rawPrices.find(p => p.symbol === 'TRX');
-
       const usdtPrice = usdtItem ? parseFloat(usdtItem.sell) : 0;
       
-      const btcUsdPrice = btcItem ? parseFloat(btcItem.sell) : 0;
-      const xrpUsdPrice = xrpItem ? parseFloat(xrpItem.sell) : 0;
-      const trxUsdPrice = trxItem ? parseFloat(trxItem.sell) : 0;
-      
-      const btcTomanPrice = btcUsdPrice * usdtPrice;
-      const xrpTomanPrice = xrpUsdPrice * usdtPrice;
-      const trxTomanPrice = trxUsdPrice * usdtPrice;
+      if (usdtPrice > 0) {
+        prices['USDT'] = {
+          price: usdtPrice,
+          symbol: 'USDT',
+          name: 'Tether',
+          dayHigh: usdtPrice * 1.01,
+          dayLow: usdtPrice * 0.99
+        };
+      }
       
       const result = {
         status: 'ok',
-        prices: {
-          BTC: { price: btcTomanPrice, symbol: 'BTC', name: 'Bitcoin', dayHigh: btcTomanPrice * 1.02, dayLow: btcTomanPrice * 0.98 },
-          XRP: { price: xrpTomanPrice, symbol: 'XRP', name: 'Ripple', dayHigh: xrpTomanPrice * 1.03, dayLow: xrpTomanPrice * 0.97 },
-          TRX: { price: trxTomanPrice, symbol: 'TRX', name: 'Tron', dayHigh: trxTomanPrice * 1.025, dayLow: trxTomanPrice * 0.975 },
-          USDT: { price: usdtPrice, symbol: 'USDT', name: 'Tether', dayHigh: usdtPrice * 1.01, dayLow: usdtPrice * 0.99 }
-        },
+        prices,
         lastUpdated: new Date().toISOString()
       };
       
-      nobitexCache = { data: result, timestamp: Date.now() };
+      nobitexOrderbookCache = { data: result, timestamp: Date.now() };
       res.json(result);
     } catch (error) {
       console.error("Test Plan fetch error:", error);
