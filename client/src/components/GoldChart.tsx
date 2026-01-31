@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import type { PriceItem } from "@shared/schema";
 
 interface GoldChartProps {
@@ -13,11 +13,11 @@ const ENGLISH_NAMES: Record<string, string> = {
   'سکه ۱ گرمی': 'Azadi 1g',
   'انس نقره': 'Silver',
   'مثقال طلا': 'Mithqal',
-  'ربع سکه': 'Azadi 1/4',
-  'نیم سکه': 'Azadi 1/2',
+  'ربع سکه': '1/4 Azadi',
+  'نیم سکه': '1/2 Azadi',
 };
 
-const COLORS = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#eab308', '#facc15', '#fef08a', '#d97706', '#b45309'];
+const COLORS = ['#f59e0b', '#fbbf24', '#fcd34d', '#eab308', '#d97706', '#b45309'];
 
 export function GoldChart({ data }: GoldChartProps) {
   const chartData = data
@@ -32,38 +32,63 @@ export function GoldChart({ data }: GoldChartProps) {
 
   if (chartData.length === 0) return null;
 
+  const maxValue = Math.max(...chartData.map(d => d.value));
+
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-white/10 rounded-xl p-6 mb-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Gold & Coins Price Comparison (Million Toman)</h3>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-            <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 12 }} />
-            <YAxis 
-              dataKey="name" 
-              type="category" 
-              tick={{ fill: '#9ca3af', fontSize: 12 }} 
-              width={80}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1f2937', 
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                color: '#f3f4f6'
-              }}
-              formatter={(value: number, name: string, props: any) => [
-                `${new Intl.NumberFormat('en-US').format(props.payload.fullValue)} Toman`,
-                'Price'
-              ]}
-            />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+    <div className="bg-gradient-to-br from-yellow-500/5 to-amber-500/5 backdrop-blur-sm border border-yellow-500/20 rounded-xl p-6 mb-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+          <span className="text-xl">🪙</span>
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-foreground">Gold & Coins Overview</h3>
+          <p className="text-sm text-muted-foreground">Prices in Million Toman</p>
+        </div>
+      </div>
+      
+      <div className="space-y-3">
+        {chartData.map((item, index) => (
+          <div key={item.name} className="group">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium text-foreground">{item.name}</span>
+              <span className="text-sm font-bold text-yellow-400">
+                {new Intl.NumberFormat('en-US').format(item.fullValue)} T
+              </span>
+            </div>
+            <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                style={{ 
+                  width: `${(item.value / maxValue) * 100}%`,
+                  background: `linear-gradient(90deg, ${COLORS[index % COLORS.length]}, ${COLORS[(index + 1) % COLORS.length]})`
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="mt-6 pt-4 border-t border-white/10">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {chartData.length}
+            </p>
+            <p className="text-xs text-muted-foreground">Items</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-amber-400">
+              {(chartData[0]?.value || 0).toFixed(1)}M
+            </p>
+            <p className="text-xs text-muted-foreground">Highest</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-orange-400">
+              {(chartData[chartData.length - 1]?.value || 0).toFixed(1)}M
+            </p>
+            <p className="text-xs text-muted-foreground">Lowest</p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 import { usePrices } from "@/hooks/use-market-data";
 import { PriceCard } from "@/components/PriceCard";
 import { GoldChart } from "@/components/GoldChart";
+import { TestPlanSection } from "@/components/TestPlanSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCcw, Coins, Sparkles, Banknote, Clock, Globe } from "lucide-react";
+import { RefreshCcw, Coins, Sparkles, Banknote, Clock, Globe, FlaskConical } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -96,6 +97,10 @@ export default function Home() {
               <Banknote className="w-4 h-4" />
               Currencies
             </TabsTrigger>
+            <TabsTrigger value="testplan" className="px-4 py-2 rounded-md data-[state=active]:bg-purple-500 data-[state=active]:text-white gap-2">
+              <FlaskConical className="w-4 h-4" />
+              Test Plan <span className="text-[10px] ml-1 opacity-70">(Beta)</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="crypto" className="focus:outline-none">
@@ -150,6 +155,10 @@ export default function Home() {
                 ))}
               </motion.div>
             )}
+          </TabsContent>
+
+          <TabsContent value="testplan" className="focus:outline-none">
+            <TestPlanSection />
           </TabsContent>
         </Tabs>
 
