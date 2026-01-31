@@ -35,10 +35,15 @@ Preferred communication style: Simple, everyday language.
 5. Test Plan (Beta) section uses `/api/nobitex` endpoint with 1-minute refresh for BTC, XRP, TRX prices in Toman
 
 ### Recent Changes (Jan 2026)
-- Added "Test Plan (Beta)" section with 24-hour price charts for Bitcoin, XRP, and Tron
-- Converted all prices to display in "Toman" format
+- Added light/dark theme toggle with ThemeProvider component
+- Added About dialog with app information in header
+- Updated crypto prices to display in USDT (except USDT itself which shows Toman)
+- Improved Test Plan (Beta) section with more cryptocurrencies from Nobitex orderbook API
+- Uses `https://apiv2.nobitex.ir/v3/orderbook/all` for 26+ cryptocurrency prices
+- Featured cryptocurrencies: BTC, ETH, XRP, SOL, ADA, DOGE with charts
+- Additional cryptocurrencies displayed in compact card format
+- Fixed footer link: DeepInkTeam.com (corrected capitalization)
 - Added English name translations for all Persian labels
-- Redesigned gold chart with progress bars and statistics
 - USDT now displayed prominently as first item in crypto section
 - AZADI coin symbols formatted with parentheses notation (e.g., AZADI (1), AZADI (1/2))
 
