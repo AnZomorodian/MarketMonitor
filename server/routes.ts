@@ -125,16 +125,29 @@ export async function registerRoutes(
         return res.json(nobitexOrderbookCache.data);
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      
-      const response = await fetch('https://apiv2.nobitex.ir/v3/orderbook/all', {
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json'
+      const fetchWithRetry = async (url: string, retries = 3): Promise<Response> => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            const response = await fetch(url, {
+              signal: controller.signal,
+              headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0'
+              }
+            });
+            clearTimeout(timeoutId);
+            return response;
+          } catch (err) {
+            if (i === retries - 1) throw err;
+            await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+          }
         }
-      });
-      clearTimeout(timeoutId);
+        throw new Error('All retries failed');
+      };
+      
+      const response = await fetchWithRetry('https://apiv2.nobitex.ir/v3/orderbook/all');
       
       if (!response.ok) {
         throw new Error('Nobitex orderbook API failed');

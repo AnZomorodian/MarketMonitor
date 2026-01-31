@@ -69,7 +69,7 @@ export default function Home() {
               Just Check <span className="text-primary">Market</span>
             </h1>
             <p className="text-muted-foreground">
-              Real-time market prices
+              Real-Time Market Prices, Free, Safe, Just Check
             </p>
           </div>
 
